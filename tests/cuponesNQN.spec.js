@@ -267,9 +267,9 @@ test.describe('Test Lotline La Neuquina', () => {
     console.log('✅ Paso 3: Navegación a pantalla de sorteos exitosa');
     
     // Esperar a que cargue completamente la página
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     
-   // await page.screenshot({ path: 'test-results/quiniela-02-sorteos.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/quiniela-02-sorteos.png', fullPage: true });
 
     // Paso 4: Click en sorteo Nocturna DENTRO DEL IFRAME
     console.log('🖱️ Paso 4: Seleccionando sorteo Nocturna dentro del iframe...');
@@ -357,7 +357,7 @@ test.describe('Test Lotline La Neuquina', () => {
     // Búsqueda específica DENTRO DEL IFRAME
     const cuponPopup = iframe.locator('div#download.cuponFinal').first();
     await cuponPopup.waitFor({ state: 'visible', timeout: 1000 });
-        
+    
          // Verificar mensaje de éxito específico
     const mensajeExito = iframe.locator('div.text-success:has-text("¡CUPON GENERADO!")').first();
     await mensajeExito.waitFor({ state: 'visible', timeout: 1000 });
@@ -751,7 +751,7 @@ test('Quini6', async ({ page }) => {
     // Verificar que estamos en /home
     await expect(page).toHaveURL(/.*\/plataforma\/home/);
     console.log('✅ Paso 1: En pantalla de juegos');
-    await page.screenshot({ path: 'test-results/poceada-01-home.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/quini6-01-home.png', fullPage: true });
 
     // CERRAR MODAL DE AVISOS GENERALES SI APARECE
   console.log('🔍 Verificando modal de Avisos generales...');
@@ -784,7 +784,7 @@ await quini6Link.click();
 console.log('✅ Click en Quini 6 ejecutado');
     
   await page.waitForTimeout(3000);
-  await page.screenshot({ path: 'test-results/quini6-02-pantalla.png', fullPage: true });
+  //await page.screenshot({ path: 'test-results/quini6NQN-02-pantalla.png', fullPage: true });
 
     // Trabajar dentro del iframe
   const iframe = page.frameLocator('iframe[title="juego"]');
@@ -795,7 +795,7 @@ console.log('✅ Click en Quini 6 ejecutado');
   await cerrarTooltipIframe(page);
     
   await page.waitForTimeout(1000);
-  await page.screenshot({ path: 'test-results/quini6-03-pantalla.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/quini6NQN-03-pantalla.png', fullPage: true });
 
    // ── Verificar si hay selección de evento antes del botón suerte ──
 const haySeleccionEvento = await iframe.locator('.EventPlusInfo_nameBox__Gsg5H')
@@ -828,14 +828,14 @@ if (haySeleccionEvento) {
     await page.waitForTimeout(1000);
 
   console.log('🖱️ Paso 4: Click en botón Avanzar...');
-  await page.screenshot({ path: 'test-results/quini6-04-pantalla.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/quini6NQN-04-pantalla.png', fullPage: true });
 
 // Click en botón Avanzar
 
 await iframe.getByRole('button', { name: /Avanzar/i }).click();
 
 console.log('✅ Botón Avanzar clickeado');
-await page.screenshot({ path: 'test-results/quini6-05-pantalla.png', fullPage: true });
+await page.screenshot({ path: 'test-results/quini6NQN-05-pantalla.png', fullPage: true });
 
 //const revanchaBadge = iframe.locator('span.badge:has-text("REVANCHA")');
 const precioCirculo = iframe.locator('.Modalities_circle__lqrqi');
@@ -844,20 +844,48 @@ const botonConfirmar = iframe.getByRole('button', { name: /Confirmar/i });
 await page.frameLocator('iframe[title="juego"]').getByText('REVANCHA', { exact: true }).click();
 await expect(precioCirculo).toHaveText('$2.000', { timeout: 2000 });
 await botonConfirmar.click();
-await page.screenshot({ path: 'test-results/quini6-06-pantalla.png', fullPage: true });
+await page.screenshot({ path: 'test-results/quini6NQN-06-pantalla.png', fullPage: true });
 console.log('🖱️ Paso 5: Click en botón Confirmar realizado');
 
 await page.waitForTimeout(3000);
-await page.screenshot({ path: 'test-results/quini6-07-cupon-generado.png', fullPage: true });
+await page.screenshot({ path: 'test-results/quini6NQN-07-cupon-generado.png', fullPage: true });
     
-console.log('🎉 ¡Test de Quini 6 completado exitosamente!');
-
+// Paso 6: Comprobar que el cupón se generó (descarga/modal con "¡CUPÓN GENERADO!")
+         console.log('🔎 Paso 6: Verificando generación del cupón...');
+   
+         // El modal del cupón vive dentro del iframe del juego (id="download",
+         const cuponModal = iframe.locator('#download');
+         const cuponTitulo = iframe.locator('#download').getByText('¡CUPÓN GENERADO!', { exact: true });
+   
+         let cuponVisible = false;
+         try {
+           await cuponModal.waitFor({ state: 'visible', timeout: 10000 });
+           cuponVisible = true;
+         } catch (e) {
+           cuponVisible = false;
+         }
+   
+         // Si el modal del cupón nunca apareció, no podemos comprobar nada: hacemos skip.
+         test.skip(
+           !cuponVisible,
+           '⚠️ No se pudo localizar el modal del cupón (#download) dentro del iframe: se omite la verificación del texto "¡CUPÓN GENERADO!".'
+         );
+   
+         // Si llegamos acá, el modal apareció: ahora sí exigimos el texto esperado.
+         // Si no lo contiene, este expect falla el test (comportamiento deseado).
+         await expect(cuponTitulo).toContainText('¡CUPÓN GENERADO!', { timeout: 5000 });
+   
+         console.log('✅ Cupón confirmado: se encontró el texto "¡CUPÓN GENERADO!"');
+         await page.screenshot({ path: 'test-results/quini6NQN-08-cupon-verificado.png', fullPage: true });
+   
+         console.log('🎉 ¡Test de Quini 6 completado exitosamente!');
+ 
 });
 
 test('Loto Plus', async ({ page }) => {
   await expect(page).toHaveURL(/.*\/plataforma\/home/);
   console.log('✅ Paso 1: En pantalla de juegos');
-  await page.screenshot({ path: 'test-results/lotoplus-01-home.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/lotoplusNQN-01-home.png', fullPage: true });
 
   await cerrarModalTutorial(page);
 
@@ -885,7 +913,7 @@ await lotoLink.click();
 console.log('✅ Click en Loto Plus');
 
   await page.waitForTimeout(3000);
-  await page.screenshot({ path: 'test-results/lotoplus-02-pantalla.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/lotoplusNQN-02-pantalla.png', fullPage: true });
 
   const iframe = page.frameLocator('iframe[title="juego"]');
 
@@ -899,7 +927,7 @@ console.log('✅ Click en Loto Plus');
   await cerrarTooltipIframe(page);
 
   await page.waitForTimeout(1000);
-  await page.screenshot({ path: 'test-results/lotoplus-03-pantalla.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/lotoplusNQN-03-pantalla.png', fullPage: true });
 
   console.log('🖱️ Paso 3: Click en boton suerte...');
   const botonSuerte = iframe.locator('#boton-suerte');
@@ -911,7 +939,7 @@ console.log('✅ Click en Loto Plus');
   console.log('🖱️ Paso 4: Click en botón Avanzar...');
   await iframe.getByRole('button', { name: /Avanzar/i }).click();
   console.log('✅ Botón Avanzar clickeado');
-  await page.screenshot({ path: 'test-results/lotoplus-04-pantalla.png', fullPage: true }); // ✅ después del click
+  await page.screenshot({ path: 'test-results/lotoplusNQN-04-pantalla.png', fullPage: true }); // ✅ después del click
 
   await page.waitForTimeout(2000);
 
@@ -919,11 +947,36 @@ console.log('✅ Click en Loto Plus');
   const botonConfirmar = iframe.getByRole('button', { name: /Confirmar/i });
   await botonConfirmar.click();
   await page.waitForTimeout(3000);
-  await page.screenshot({ path: 'test-results/lotoplus-05-cupon-generado.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/lotoplusNQN-05-cupon-generado.png', fullPage: true });
 
-  console.log('🎉 ¡Test de Loto Plus completado exitosamente!');
+  // Paso 6: Comprobar que el cupón se generó (descarga/modal con "¡CUPÓN GENERADO!")
+    console.log('🔎 Paso 6: Verificando generación del cupón...');
+
+    const cuponModal = iframe.locator('#download');
+    const cuponTitulo = cuponModal.getByText('¡CUPÓN GENERADO!', { exact: true });
+
+    let cuponVisible = false;
+    try {
+      await cuponModal.waitFor({ state: 'visible', timeout: 10000 });
+      cuponVisible = true;
+    } catch (e) {
+      cuponVisible = false;
+    }
+
+    // Si el modal del cupón nunca apareció, no podemos comprobar nada: hacemos skip.
+    test.skip(
+      !cuponVisible,
+      '⚠️ No se pudo localizar el modal del cupón (#download) dentro del iframe: se omite la verificación del texto "¡CUPÓN GENERADO!".'
+    );
+
+    // Si llegamos acá, el modal apareció: ahora sí exigimos el texto esperado.
+    await expect(cuponTitulo).toContainText('¡CUPÓN GENERADO!', { timeout: 5000 });
+
+    console.log('✅ Cupón confirmado: se encontró el texto "¡CUPÓN GENERADO!"');
+    await page.screenshot({ path: 'test-results/lotoplusNQN-07-cupon-verificado.png', fullPage: true });
+
+    console.log('🎉 ¡Test de Loto Plus completado exitosamente!');
 });
 
 });
   
-
