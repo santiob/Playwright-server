@@ -106,6 +106,14 @@ const fecha = new Date().toLocaleDateString('es-AR', {
 
 // Comprimir solo playwright-report (sin videos ni screenshots)
 const zipPath = path.resolve('./test-results.zip');
+
+// Eliminar el zip de la corrida anterior: `zip -r` NO sobrescribe un archivo
+// existente, sino que va agregando/actualizando entradas sobre él, por lo
+// que si no se borra primero el .zip crece indefinidamente entre corridas.
+if (fs.existsSync(zipPath)) {
+  fs.unlinkSync(zipPath);
+}
+
 if (fs.existsSync(reportDir)) {
   // Excluir archivos pesados
   execSync(`zip -r ${zipPath} ./test-results -x "*.webm" -x "*.mp4"`);
